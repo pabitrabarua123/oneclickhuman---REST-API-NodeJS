@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <title>Email Verification</title>
+  <style>
+      .subscribe-container {
+    margin: 60px auto;
+    text-align: center;
+}
+h2 {
+    font-size: 30px;
+}
+i.fa.fa-check-circle {
+    color: #02ab76;
+    font-size: 50px;
+}
+p {
+    font-size: 18px;
+}
+  </style>
+</head>
+<body>
+<div class="subscribe-container">
+  <h2>Thank you!</h2>
+  <p><i class="fa fa-check-circle" aria-hidden="true"></i></p>
+  <p>Your account has been verified.</p>
+   <h4>Redirecting to login in <span id="time">5</span> seconds</h4>
+</div>
+
+<script>
+    function startTimer(duration, display) {
+    var timer = duration, minutes, seconds;
+    setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? minutes : minutes;
+        seconds = seconds < 10 ? + seconds : seconds;
+
+        display.textContent = seconds;
+
+        if (--timer < 0) {
+           location.replace('https://next.oneclickhuman.com/humanizer');
+        }
+    }, 1000);
+}
+
+window.onload = function () {
+    var fiveMinutes = 60/12,
+        display = document.querySelector('#time');
+        startTimer(fiveMinutes, display);
+};
+</script>
+</body>
+</html>

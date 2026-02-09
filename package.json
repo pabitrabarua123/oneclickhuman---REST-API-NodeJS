@@ -1,0 +1,27 @@
+{
+  "name": "oneclick",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Oneclickhuman",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "eventsource-parser": "^1.0.0",
+    "express": "^4.18.2",
+    "express-handlebars": "^6.0.7",
+    "mysql": "^2.18.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.1",
+    "nodemailer-express-handlebars": "^5.0.0",
+    "openai": "^4.73.1",
+    "sanitize-html": "^1.27.5",
+    "stripe": "^12.5.0"
+  }
+}
