@@ -5,8 +5,6 @@ const bodyParser = require('body-parser');
 var nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
 const bcrypt = require('bcrypt');
-//const { Configuration, OpenAIApi } = require("openai");
-//import OpenAI from "openai";
 const { OpenAI } = require("openai");
 const sanitizeHtml = require('sanitize-html');
 const path = require('path');
