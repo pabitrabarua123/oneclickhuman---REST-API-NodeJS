@@ -1,5 +1,8 @@
 const express = require('express');
 const app = express();
+require("dotenv").config();
+// routes
+const userRoute = require("./routes/user.routes");
 const cors = require('cors');
 const bodyParser = require('body-parser');
 var nodemailer = require('nodemailer');
@@ -11,7 +14,8 @@ const path = require('path');
 const cron = require('node-cron');
 const viewPath =  path.resolve(__dirname, './templates/views/');
 
-const PORT = 3020;
+
+const PORT = process.env.PORT || 5000;
 
 // Database connection
 var db = require('./connection.js');
@@ -900,50 +904,7 @@ app.post('/get_api_key', cors(), async (req, res)=>{
 });
 
 // Sign up
-app.post('/register', cors(), async (req, res)=>{
-    
-    res.set('Access-Control-Allow-Origin', '*');
-    var email = req.body.email;
-    var user_exist = false;
-
-    db.query(`SELECT * FROM user WHERE email = '${email}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        if(response.length != 0){
-            res.status(200).json({'id' : 0, 'status' : 'User already exist!'});
-        }else{
-
-    var password = req.body.password;
-    var encryptedPass = '';
-    bcrypt.genSalt(saltRounds).then(salt => {
-        console.log('Salt: ', salt);
-        return bcrypt.hash(password, salt).then(hash => {
-          console.log('Hash: ', hash);
-          encryptedPass = hash;
-          let currentDate = new Date().toJSON().slice(0, 10);
-          db.query(`INSERT INTO user (email, password, status, daily_quota, quota_updated_date) VALUES ('${email}', '${encryptedPass}', 0, 1500, '${currentDate}')`, (err, response) => {
-            if (err) {
-               console.error(err);
-               return;
-            }
-            sendMail(email, response.insertId);
-            var dt = new Date();  
-            var edt = dt.toLocaleString('en-US', {
-              timeZone: 'America/New_York',
-              dateStyle: 'full',
-              timeStyle: 'full'
-            });
-            res.status(200).json({'id' : response.insertId, 'user_email' : email, 'login' : 'on-verification', 'time' : edt, 'role' : 0});
-        });
-    
-       });
-    }); 
-        }
-
-    });
-});
+app.use("/api/user", userRoute);
 
 // Sign in
 app.post('/login', cors(), async (req, res)=>{

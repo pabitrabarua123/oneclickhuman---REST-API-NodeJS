@@ -1,17 +1,8 @@
 const { Router } = require("express");
-
 const router = Router();
+const userController = require("../controllers/user.controllers");
 
-router.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
-    // Implement registration logic here
-    res.status(201).json({ message: "User registered successfully" });
-});
-
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-    // Implement login logic here
-    res.status(200).json({ message: "User logged in successfully" });
-});
+router.post("/register", userController.registerUser);
+router.post("/login", userController.signInUser);
 
 module.exports = router;
