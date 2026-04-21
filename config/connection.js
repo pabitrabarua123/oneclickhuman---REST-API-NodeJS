@@ -1,19 +1,18 @@
-//jshint esversion: 6
-var mysql = require('mysql');
+const mysql = require("mysql2");
 
-var pool = mysql.createPool({
-  connectionLimit:1000,
-  host: "localhost",
-  user: "oneclickhuman_new_user",
-  password: "BCor08TVmbssi",
-  database:"oneclickhuman_new_db"
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
-pool.getConnection((err,connection)=> {
-  if(err)
-  throw err;
-  console.log('Database connected successfully');
-  connection.release();
+db.connect((err) => {
+  if (err) {
+    console.error("DB connection failed:", err);
+  } else {
+    console.log("DB connected");
+  }
 });
 
-module.exports = pool;
+module.exports = db;

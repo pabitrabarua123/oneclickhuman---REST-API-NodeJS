@@ -17,12 +17,7 @@ const viewPath =  path.resolve(__dirname, './templates/views/');
 
 const PORT = process.env.PORT || 5000;
 
-// Database connection
-var db = require('./connection.js');
-var db_test = require('./connection_test.js');
-
 const prompt_test = require('./prompt.js');
-const prompt_live = require('./prompt_live.js');
 
 let stripe;
 let openai;
@@ -38,9 +33,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 app.use(express.static('public'));
 
-// Place this middleware before your route definitions
+// Middleware for all routes to handle multiple slashes and log requests
 app.use((req, res, next) => {
-  // Normalize the URL by replacing multiple slashes with a single slash
   req.url = req.url.replace(/\/{2,}/g, '/');
   console.log(`Received request: ${req.method} ${req.url}`);
   next();
@@ -435,83 +429,6 @@ app.get('/completion_batches/:promptId', async (req, res) => {
                     }
                 }
                  
-
-        // response.then(resp => {
-        //     resp.on('data', data => {
-        //         const lines = data.toString().split('\n').filter(line => line.trim() !== '');
-        //     for (const line of lines) {
-        //         // console.log('loop count');
-        //          let message = line.replace(/^data: /, '');
-        //          //console.log(message);
-
-        //          try {
-        //           let payload = JSON.parse(message);
-        //           if(payload.choices && payload.choices.length > 0 && payload.choices[0].delta) {
-        //              let txt = payload.choices[0].delta.content;
-        //              //console.log(txt);
-        //              if(!is_live_mode){
-        //                  if(paraphrase_nos == 0){
-        //                      paraphrase_store += txt;
-        //                  }else{
-        //                     res.write('data: ' + JSON.stringify({ msg: txt }) + '\n\n');      
-        //                  }
-        //              }else{
-        //               res.write('data: ' + JSON.stringify({ msg: txt }) + '\n\n');
-        //              }
-
-        //           }
-        //          } catch (e) {
-        //           // Handle JSON parsing error
-        //           console.error('Error parsing JSON message:', e);
-        //          }
-        //       }
-        //     });
-    
-        //     resp.on('end', () => {
-        //         // Handle end here
-        //         // ...
-
-        //         if (batches.length > 0) {
-        //             sendBatch(batches.shift()); // Recursively send the next batch
-        //         } else {
-        //             console.log("Batch Prepared: " + paraphrase_store);
-        //             if(!is_live_mode){
-        //                 if(paraphrase_nos == 0){
-        //                     paraphrase_nos++;
-        //                     let next_paraphrase_batches = splitIntoBatches(paraphrase_store, prompt_test.batch_character_next);
-        //                     console.log("Next request: ");
-        //                     if(mode == 'Premium Mode'){
-        //                           before_prompt = prompt_test.dynamic_prompt_test_premium_mode_next;
-        //                           temp = prompt_test.temp_premium_mode_next;
-        //                           frequency = prompt_test.frequency_premium_mode_next;
-        //                           presence = prompt_test.presence_premium_mode_next;
-        //                           top_p = prompt_test.top_p_premium_mode_next;
-        //                           model = prompt_test.model_next;
-        //                           max_tokens = prompt_test.max_tokens_next;
-        //                     }
-        //                     if(mode == 'Lightning Mode'){
-        //                           before_prompt = prompt_test.dynamic_prompt_test_lightning_mode_next;
-        //                           temp = prompt_test.temp_lightning_mode_next;
-        //                           frequency = prompt_test.frequency_lightning_mode_next;
-        //                           presence = prompt_test.presence_lightning_mode_next;
-        //                           top_p = prompt_test.top_p_lightning_mode_next;
-        //                           model = prompt_test.model_lightning_next;
-        //                           max_tokens = prompt_test.max_tokens_lightning_next;
-        //                     }
-        //                     before_prompt = before_prompt.replace("English", language);
-        //                     sendBatch(next_paraphrase_batches.shift())
-        //                 }else{
-        //                   res.write('data: ' + JSON.stringify({ msg : '[DONE]' }) + '\n\n');
-        //                   res.end(); 
-        //                 }
-        //             }else{
-        //               res.write('data: ' + JSON.stringify({ msg : '[DONE]' }) + '\n\n');
-        //               res.end(); 
-        //             }
-        //         }
-        //     });
-    
-        // });
     }
     
 });
@@ -865,8 +782,6 @@ app.get('/get_coupon_test', cors(), async (req, res)=>{
 
 // Generate API KEY
 app.post('/generate_api_key', cors(), async (req, res)=>{
-    
-    res.set('Access-Control-Allow-Origin', '*');
     var user_id = req.body.user_id;
 
     var timestamp = new Date().getTime();
@@ -903,60 +818,12 @@ app.post('/get_api_key', cors(), async (req, res)=>{
         });
 });
 
-// Sign up
+// User routes
 app.use("/api/user", userRoute);
 
-// Sign in
-app.post('/login', cors(), async (req, res)=>{
-    
-    res.set('Access-Control-Allow-Origin', '*');
-    var email = req.body.email;
-    var password = req.body.password;
-
-    db.query(`SELECT * FROM user WHERE email = '${email}'`, async (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        if(response.length == 0){
-            res.status(200).json({'login' : 'failure'});
-        }else{
-               var pass = response[0].password;
-               const validPassword = await bcrypt.compare(password, pass);
-               if(!validPassword){
-                   res.status(200).json({'login' : 'failure'}); 
-               }else{
-                 var dt = new Date();  
-                 var edt = dt.toLocaleString('en-US', {
-                       timeZone: 'America/New_York',
-                       dateStyle: 'full',
-                       timeStyle: 'full'
-                 });
-                 res.status(200).json({ 'login' : 'success', 'id' : response[0].id, 'time' : edt, 'user_email' : response[0].email, 'role' : response[0].role });
-                
-            }
-        }
-    });
-});
 
 
-app.post('/forgot_password', cors(), async (req, res)=>{
-     
-     res.set('Access-Control-Allow-Origin', '*');
-     var email = req.body.email;
 
-     let otp = Math.floor((Math.random() * 10000) + 1);
-     db.query(`INSERT INTO reset_password (email, otp) VALUES ('${email}', '${otp}')`, (err, response) => {
-          if (err) {
-               console.error(err);
-               return;
-          }
-          let sent_email = sendMailOTP(email, otp);
-          if(sent_email) {
-               res.status(200).json({'status' : 'success'});
-          }
-    });
-});
 
 app.post('/add_record', cors(), async (req, res) => {
      
@@ -988,44 +855,6 @@ app.post('/add_record', cors(), async (req, res) => {
 
 });
 
-
-app.post('/reset_password', cors(), async (req, res)=>{
-     
-     res.set('Access-Control-Allow-Origin', '*');
-     var email = req.body.email;
-     var new_password = req.body.new_password;
-     var otp = req.body.otp;
-
-     db.query(`SELECT * FROM reset_password WHERE email = '${email}' AND otp = '${otp}'`, (err, response) => {
-          if (err) {
-               console.error(err);
-               return;
-          }
-          if(response.length == 0){
-               res.status(200).json({'status' : 'failure'});
-          }else{
-              var encryptedPass = '';
-              bcrypt.genSalt(saltRounds).then(salt => {
-                console.log('Salt: ', salt);
-                return bcrypt.hash(new_password, salt).then(hash => {
-                  console.log('Hash: ', hash);
-                  encryptedPass = hash;
-
-                  db.query(`UPDATE user SET password = '${encryptedPass}' WHERE email = '${email}'`, (err, response) => {
-                       if (err) {
-                            console.error(err);
-                            return;
-                       }
-                       db.query(`DELETE FROM reset_password WHERE email = '${email}'`, (err, response) => {
-                            res.status(200).json({'status' : 'success'}); 
-                       });
-                  });
-                });
-              }); 
-          }
-    });
-});
-
 // Sending Mail for Onetime Purchase
 async function sendMailOTP(email, otp) {
 
@@ -1048,56 +877,6 @@ try{
   }
 }
 
-// Delete account
-app.post('/delete_account', cors(), async (req, res)=>{
-    
-    res.set('Access-Control-Allow-Origin', '*');
-    var user_id = req.body.user_id;
-
-    db.query(`SELECT * FROM user WHERE id = '${user_id}'`, async (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        if(response.length == 0){
-            res.status(200).json({'status' : 'Account not found'});
-        }else{
-           db.query(`DELETE FROM user WHERE id = '${user_id}'`, async (err, response) => {
-                if (err) {
-                     console.error(err);
-                     return;
-                }
-                res.status(200).json({'status' : 'success'});
-           });
-        }
-    });
-});
-
-// Delete account
-app.post('/delete_account_test', cors(), async (req, res)=>{
-    
-    res.set('Access-Control-Allow-Origin', '*');
-    var user_id = req.body.user_id;
-
-    db_test.query(`SELECT * FROM user WHERE id = '${user_id}'`, async (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        if(response.length == 0){
-            res.status(200).json({'status' : 'Account not found'});
-        }else{
-           db_test.query(`DELETE FROM user WHERE id = '${user_id}'`, async (err, response) => {
-                if (err) {
-                     console.error(err);
-                     return;
-                }
-                res.status(200).json({'status' : 'success'});
-           });
-        }
-    });
-});
-
 // Email verification
 app.get('/verification/:id', (req, res) => {
     
@@ -1108,19 +887,6 @@ app.get('/verification/:id', (req, res) => {
             return;
         }
         res.sendFile(__dirname + "/html/index.html");
-    }); 
-});
-
-// Email verification
-app.get('/verification_test/:id', (req, res) => {
-    
-    var user_id = req.params.id;
-    db_test.query(`UPDATE user SET status = '1' WHERE id = '${user_id}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        res.sendFile(__dirname + "/html/index_test.html");
     }); 
 });
 
@@ -1512,64 +1278,6 @@ app.post('/updatequota', cors(), async (req, res) => {
     });
 });
 
-// Update quota
-app.post('/updatequota_test', cors(), async (req, res) => {
-    
-    res.set('Access-Control-Allow-Origin', '*');
-    var uid = req.body.user_id;
-    var quota_to_decresed = req.body.quota_to_decresed;
-    var decreased_words = req.body.decreased_words;
-
-    db_test.query(`SELECT * FROM user WHERE id = '${uid}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-
-        var email = response[0].email;
-        var subscrption_status = response[0].subscrption_status;
-        var onetime_credit = response[0].onetime_credit;
-        var credits_availbe = response[0].credits_availbe;
-        var lifetime_credits = response[0].lifetime_credits;
-        var daily_quota = response[0].daily_quota;
-        var updated_field = '';
-        var quota_decreased = 0; 
-
-        if(quota_to_decresed == 1){
-             updated_field = 'daily_quota';
-             quota_decreased = daily_quota - decreased_words;
-        }
-        if(quota_to_decresed == 2){
-             updated_field = 'credits_availbe';
-             quota_decreased = credits_availbe - decreased_words; 
-        }
-        if(quota_to_decresed == 3){
-             updated_field = 'onetime_credit';
-             quota_decreased = onetime_credit - decreased_words; 
-
-             if(quota_decreased == 0) {
-                  sendMailLifetimeExpired(email);
-             }
-        }
-        if(quota_to_decresed == 4){
-             updated_field = 'lifetime_credits';
-             quota_decreased = lifetime_credits - decreased_words; 
-        }
-        if(quota_decreased <= 30){
-                 quota_decreased = 0;
-        }         
-
-        db_test.query(`UPDATE user SET ${updated_field} = '${quota_decreased}' WHERE id = '${uid}'`, (err, response) => {
-             if (err) {
-                console.error(err);
-                return;
-              }
-              res.status(200).json({'quota_decreased' : quota_decreased});
-        });
-    
-    });
-});
-
 // Match Lifetime code
 app.post('/match_lifetime_code', cors(), async (req, res)=>{
     
@@ -1720,12 +1428,6 @@ app.post('/paraphrase', cors(), async (req, res) => {
     });
 
 });
-
-/*app.get('/update_sub', async (req, res) => {
-    var sub = await stripe.subscriptions.update(
-  'sub_1NSbcf2eZvKYlo2CmnTvkvo9'
-);
-}); */
 
 // subscription purchase stripe api
 app.post('/create-checkout-session', async (req, res) => {
