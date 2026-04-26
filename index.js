@@ -259,27 +259,6 @@ app.post('/prompt_batch', (req, res) => {
         }
         before_prompt = before_prompt.replace("English", language);
     }else{
-       /* if(mode == 'Balanced Mode'){
-            before_prompt = prompt_live.dynamic_prompt_live_balanced_mode;
-            temp = prompt_live.temp_balanced_mode;
-            frequency = prompt_live.frequency_balanced_mode;
-            presence = prompt_live.presence_balanced_mode;
-            top_p = prompt_live.top_p_balanced_mode;
-        }
-        if(mode == 'Wild Mode'){
-            before_prompt = prompt_live.dynamic_prompt_live_wild_mode;
-            temp = prompt_live.temp_wild_mode;
-            frequency = prompt_live.frequency_wild_mode;
-            presence = prompt_live.presence_wild_mode;
-            top_p = prompt_live.top_p_wild_mode;
-        }
-        if(mode == 'Quality Mode'){
-            before_prompt = prompt_live.dynamic_prompt_live_quality_mode;
-            temp = prompt_live.temp_quality_mode;
-            frequency = prompt_live.frequency_quality_mode;
-            presence = prompt_live.presence_quality_mode;
-            top_p = prompt_live.top_p_quality_mode;
-        } */
 
         if(mode == 'Premium Mode'){
             before_prompt = prompt_live.dynamic_prompt_live_premium_mode;
@@ -821,40 +800,6 @@ app.post('/get_api_key', cors(), async (req, res)=>{
 // User routes
 app.use("/api/user", userRoute);
 
-
-
-
-
-app.post('/add_record', cors(), async (req, res) => {
-     
-     res.set('Access-Control-Allow-Origin', '*');
-     var user_id = req.body.user_id;
-     var user_email = req.body.user_email;
-     var mode = req.body.mode;
-     var input = req.body.input.replace(/["']/g, "");
-     var output = req.body.output.replace(/["']/g, "");
-     var quota_used = req.body.quota_used;
-     var words_used = req.body.words_used;
-     console.log(quota_used);
-
-     db.query(`INSERT INTO user_record (input, output, mode, user_email) VALUES ('${input}', '${output}', '${mode}', '${user_email}')`, (err, response) => {
-          if (err) {
-               console.error(err);
-               return;
-          }
-          
-          res.status(200).json({'status' : 'success'}); 
-    });
-
-     db.query(`UPDATE user SET quota_used = '${quota_used}', words_used = '${words_used}' WHERE id = '${user_id}'`, (err, response) => {
-          if (err) {
-               console.error(err);
-               return;
-          }
-    });
-
-});
-
 // Sending Mail for Onetime Purchase
 async function sendMailOTP(email, otp) {
 
@@ -958,128 +903,6 @@ app.post('/change_password', cors(), async (req, res)=>{
 });
 
 // Check quota
-
-app.post('/checkquota_test', cors(), async (req, res) => {
-    
-    res.set('Access-Control-Allow-Origin', '*');
-    var uid = req.body.user_id;
-    console.log(uid);
-    let currentDate = new Date().toJSON().slice(0, 10);
-    var credits_availbe = 0;
-    var subscrption_status = 0;
-    var cancellation_status = 0;
-    var onetime_plan = 0;
-    var onetime_credit = 0;
-    var monthly_plan = 0;
-    var subscription_amount = 0;
-    var onetime_amount = 0;
-    var subscription_renewal_date;
-    var is_lifetime_active = 0;
-    var lifetime_plan = 0;
-    var lifetime_refill_date;
-    var lifetime_next_refill_date;
-    var lifetime_credits = 0;
-    var max_lifetime_used = 0;
-    var quota_used = 0;
-    var currency = '';
-    var is_renewal_date_crossed = 0;
-    var role = 0;
-    var email_verification = false;
-    var subscription_id = '';
-    var created_at;
-    
-    db_test.query(`SELECT * FROM user WHERE id = '${uid}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        subscrption_status = response[0].subscrption_status;
-        cancellation_status = response[0].cancellation_status;
-        monthly_plan = response[0].monthly_plan;
-        credits_availbe = response[0].credits_availbe;
-        subscription_amount = response[0].subscrption_amount;
-        subscription_id = response[0].subscription_id;
-        onetime_credit = response[0].onetime_credit;
-        onetime_plan = response[0].onetime_plan;
-        onetime_amount = response[0].onetime_amount;
-        subscription_renewal_date = response[0].subscription_renewal_date;
-        is_lifetime_active = response[0].is_lifetime_active;
-        lifetime_plan = response[0].lifetime_plan;
-        lifetime_refill_date = response[0].lifetime_refill_date;
-        lifetime_next_refill_date = response[0].lifetime_next_refill_date;
-        lifetime_credits = response[0].lifetime_credits;
-        max_lifetime_used = response[0].max_lifetime_used,
-        quota_used = response[0].quota_used;
-        currency = response[0].currency;
-        role = response[0].role;
-        created_at = response[0].created_at;
-        
-        if(response[0].status == 1){
-            email_verification = true;
-        }else{
-           email_verification = false;
-        }
-
-        db_test.query(`SELECT * FROM user WHERE quota_updated_date = '${currentDate}' AND id = '${uid}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        if(response.length == 0){
-              db_test.query(`UPDATE user SET daily_quota = 1500, quota_updated_date = '${currentDate}' WHERE id = '${uid}'`, (err, response) => {
-                  if (err) {
-                      console.error(err);
-                      return;
-                  }
-                  console.log(response);
-                  if (new Date() > new Date(subscription_renewal_date)){
-                      is_renewal_date_crossed = 1;
-                  }else{
-                      is_renewal_date_crossed = 0;
-                  }
-                  if(cancellation_status == 1 && is_renewal_date_crossed == 1){
-                       db_test.query(`UPDATE user SET cancellation_status = 0, subscrption_status = 0, subscrption_amount = 0, credits_availbe = 0, monthly_plan = 0 WHERE id = '${uid}'`, (err, response) => {
-                         res.status(200).json({'user_created': created_at, 'email_verification': email_verification, 'status' : 'request-allowed', 'quota' : 700, 'current_date' : currentDate, 'credits_availbe' : 0, 'subscrption_status' : 0, 'cancellation_status' : 0, 'onetime_credit' : onetime_credit, 'onetime_plan' : onetime_plan, 'monthly_plan' : 0, 'subscription_amount' : 0, 'onetime_amount' : onetime_amount, 'subscription_renewal_date' : subscription_renewal_date, 'is_lifetime_active' : is_lifetime_active, 'lifetime_plan' : lifetime_plan, 'lifetime_refill_date' : lifetime_refill_date, 'lifetime_next_refill_date' : lifetime_next_refill_date, 'lifetime_credits' : lifetime_credits, 'max_lifetime_used' : max_lifetime_used, 'quota_used' : quota_used, 'currency' : currency, 'role' : role, 'subscription_id' : subscription_id});
-                       });
-                  }else{
-                     res.status(200).json({'user_created': created_at, 'email_verification': email_verification, 'status' : 'request-allowed', 'quota' : 700, 'current_date' : currentDate, 'credits_availbe' : credits_availbe, 'subscrption_status' : subscrption_status, 'cancellation_status' : cancellation_status, 'onetime_credit' : onetime_credit, 'onetime_plan' : onetime_plan, 'monthly_plan' : monthly_plan, 'subscription_amount' : subscription_amount, 'onetime_amount' : onetime_amount, 'subscription_renewal_date' : subscription_renewal_date, 'is_lifetime_active' : is_lifetime_active, 'lifetime_plan' : lifetime_plan, 'lifetime_refill_date' : lifetime_refill_date, 'lifetime_next_refill_date' : lifetime_next_refill_date, 'lifetime_credits' : lifetime_credits, 'max_lifetime_used' : max_lifetime_used, 'quota_used' : quota_used, 'currency' : currency, 'role' : role, 'subscription_id' : subscription_id});
-                  }
-                });  
-        }else{
-           var quota = response[0].daily_quota;
-           if(quota == 0){
-                  if (new Date() > new Date(subscription_renewal_date)){
-                      is_renewal_date_crossed = 1;
-                  }else{
-                      is_renewal_date_crossed = 0;
-                  }
-                  if(cancellation_status == 1 && is_renewal_date_crossed == 1){
-                       db_test.query(`UPDATE user SET cancellation_status = 0, subscrption_status = 0, subscrption_amount = 0, credits_availbe = 0, monthly_plan = 0 WHERE id = '${uid}'`, (err, response) => {
-                        res.status(200).json({'user_created': created_at, 'email_verification': email_verification, 'status' : 'request-not-allowed-ss', 'quota' : 0, 'current_date' : currentDate, 'credits_availbe' : 0, 'subscrption_status' : 0, 'cancellation_status' : 0, 'onetime_credit' : onetime_credit, 'onetime_plan' : onetime_plan, 'monthly_plan' : 0, 'subscription_amount' : 0, 'onetime_amount' : onetime_amount, 'subscription_renewal_date' : subscription_renewal_date, 'is_lifetime_active' : is_lifetime_active, 'lifetime_plan' : lifetime_plan, 'lifetime_refill_date' : lifetime_refill_date, 'lifetime_next_refill_date' : lifetime_next_refill_date, 'lifetime_credits' : lifetime_credits, 'max_lifetime_used' : max_lifetime_used, 'quota_used' : quota_used, 'currency' : currency, 'role' : role, 'subscription_id' : subscription_id});
-                       });
-                  }else{
-                    res.status(200).json({'user_created': created_at, 'email_verification': email_verification, 'status' : 'request-not-allowed-ss', 'quota' : 0, 'current_date' : currentDate, 'credits_availbe' : credits_availbe, 'subscrption_status' : subscrption_status, 'cancellation_status' : cancellation_status, 'onetime_credit' : onetime_credit, 'onetime_plan' : onetime_plan, 'monthly_plan' : monthly_plan, 'subscription_amount' : subscription_amount, 'onetime_amount' : onetime_amount, 'subscription_renewal_date' : subscription_renewal_date, 'is_lifetime_active' : is_lifetime_active, 'lifetime_plan' : lifetime_plan, 'lifetime_refill_date' : lifetime_refill_date, 'lifetime_next_refill_date' : lifetime_next_refill_date, 'lifetime_credits' : lifetime_credits, 'max_lifetime_used' : max_lifetime_used, 'quota_used' : quota_used, 'currency' : currency, 'role' : role, 'subscription_id' : subscription_id});
-                  }
-           }else{
-               if (new Date() > new Date(subscription_renewal_date)){
-                      is_renewal_date_crossed = 1;
-                  }else{
-                      is_renewal_date_crossed = 0;
-                  }
-                  if(cancellation_status == 1 && is_renewal_date_crossed == 1){
-                       db_test.query(`UPDATE user SET cancellation_status = 0, subscrption_status = 0, subscrption_amount = 0, credits_availbe = 0, monthly_plan = 0 WHERE id = '${uid}'`, (err, response) => {
-                       res.status(200).json({'user_created': created_at, 'email_verification': email_verification, 'status' : 'request-allowed', 'quota' : quota, 'current_date' : currentDate, 'credits_availbe' : 0, 'subscrption_status' : 0, 'cancellation_status' : 0, 'onetime_credit' : onetime_credit, 'onetime_plan' : onetime_plan, 'monthly_plan' : 0, 'subscription_amount' : 0, 'onetime_amount' : onetime_amount, 'subscription_renewal_date' : subscription_renewal_date, 'is_lifetime_active' : is_lifetime_active, 'lifetime_plan' : lifetime_plan, 'lifetime_refill_date' : lifetime_refill_date, 'lifetime_next_refill_date' : lifetime_next_refill_date, 'lifetime_credits' : lifetime_credits, 'max_lifetime_used' : max_lifetime_used, 'quota_used' : quota_used, 'currency' : currency, 'role' : role, 'subscription_id' : subscription_id});       
-                       });
-                  }else{
-                    res.status(200).json({'user_created': created_at, 'email_verification': email_verification, 'status' : 'request-allowed', 'quota' : quota, 'current_date' : currentDate, 'credits_availbe' : credits_availbe, 'subscrption_status' : subscrption_status, 'cancellation_status' : cancellation_status, 'onetime_credit' : onetime_credit, 'onetime_plan' : onetime_plan, 'monthly_plan' : monthly_plan, 'subscription_amount' : subscription_amount, 'onetime_amount' : onetime_amount, 'subscription_renewal_date' : subscription_renewal_date, 'is_lifetime_active' : is_lifetime_active, 'lifetime_plan' : lifetime_plan, 'lifetime_refill_date' : lifetime_refill_date, 'lifetime_next_refill_date' : lifetime_next_refill_date, 'lifetime_credits' : lifetime_credits, 'max_lifetime_used' : max_lifetime_used, 'quota_used' : quota_used, 'currency' : currency, 'role' : role, 'subscription_id' : subscription_id});
-                  }
-           }
-        }
-    });
-    
-    });
-});
-
 app.post('/checkquota', cors(), async (req, res) => {
     
     res.set('Access-Control-Allow-Origin', '*');
@@ -1457,17 +1280,9 @@ app.post('/create-checkout-session', async (req, res) => {
 
   coupon = response[0].coupon;
   var off = response[0].discount;
-  var affiliator = response[0].affiliator;
   var plan = 0;
   var amnt = 0;
   var currency = '';
-
-  db.query(`INSERT INTO affiliation (affiliator, user_email, promocode, type) VALUES ('${affiliator}', '${email_address}', '${promocode}', 1)`, async (err, response) => {
-     if (err) {
-            console.error(err);
-            return;
-     }
-  });
 
   console.log('Price number: ' + subscription);
   
@@ -1582,17 +1397,9 @@ app.post('/create-checkout-session-test', async (req, res) => {
 
   coupon = response[0].coupon;
   var off = response[0].discount;
-  var affiliator = response[0].affiliator;
   var plan = 0;
   var amnt = 0;
   var currency = '';
-
-  db_test.query(`INSERT INTO affiliation (affiliator, user_email, promocode, type) VALUES ('${affiliator}', '${email_address}', '${promocode}', 1)`, async (err, response) => {
-     if (err) {
-            console.error(err);
-            return;
-     }
-  });
 
   console.log('Price number: ' + subscription);
   
@@ -1995,13 +1802,6 @@ cron.schedule('* * * * *', () => { // This runs the task every minute
                            console.error(err);
                            return;
                      }
-                    
-                     db.query(`UPDATE affiliation SET amount = '${amount_paid}', plan = '${plan_words}', status = 1, currency = '${currency}' WHERE user_email = '${user_email}'`, (err, response) => {
-                        if (err) {
-                            console.error(err);
-                            return;
-                        }
-                     });
 
                      db.query(`INSERT INTO payment_logs (user_email, amount_paid, currency, plan) VALUES ('${user_email}', '${amount_paid}', '${currency}', 'new subscription')`, async (err, response) => {
                         if (err) {
@@ -2027,13 +1827,6 @@ cron.schedule('* * * * *', () => { // This runs the task every minute
                      console.error(err);
                      return;
                    }
-
-                  db.query(`UPDATE affiliation SET amount = '${amount_paid}', plan = '${plan_words}', status = 1, currency = '${currency}' WHERE user_email = '${user_email}'`, (err, response) => {
-                   if (err) {
-                      console.error(err);
-                      return;
-                    }
-                });
               
                 db.query(`INSERT INTO payment_logs (user_email, amount_paid, currency, plan) VALUES ('${user_email}', '${amount_paid}', '${currency}', 'onetime')`, async (err, response) => {
                   if (err) {
@@ -2184,13 +1977,6 @@ app.post('/mywebhook_jonas', bodyParser.json({type: 'application/json'}), (reque
                   }
                 });
 
-                db.query(`UPDATE affiliation SET amount = '${amount_total_real}', plan = '${credits}', status = 1, currency = '${currency}' WHERE user_email = '${customer_email}'`, (err, response) => {
-             if (err) {
-               console.error(err);
-               return;
-             }
-                });
-              
                 db.query(`INSERT INTO payment_logs (user_email, amount_paid, currency, plan) VALUES ('${customer_email}', '${amount_total_real}', '${currency}', 'onetime')`, async (err, response) => {
                   if (err) {
                      console.error(err);
@@ -2269,13 +2055,6 @@ app.post('/mywebhook_jonas', bodyParser.json({type: 'application/json'}), (reque
                     return;
                   }
              });
-
-            db.query(`UPDATE affiliation SET amount = '${subscription_amnt}', plan = '${subscription_plan}', status = 1, currency = '${subscription_currency}' WHERE user_email = '${customer_email}'`, (err, response) => {
-             if (err) {
-               console.error(err);
-               return;
-             }
-           });
 
           db.query(`INSERT INTO payment_logs (user_email, amount_paid, currency, plan) VALUES ('${customer_email}', '${subscription_amnt}', '${subscription_currency}', 'new subscription')`, async (err, response) => {
               if (err) {
@@ -2399,130 +2178,6 @@ app.post('/mywebhook_jonas', bodyParser.json({type: 'application/json'}), (reque
         var start_dt = new Date();  
         var start_edt = start_dt.toJSON().slice(0, 10);
         var end_dt = new Date(new Date().setDate(start_dt.getDate() + 30)).toJSON().slice(0, 10); 
-
-        db.query(`UPDATE user SET credits_availbe = '${monthly_plan}', subscription_start_date = '${start_edt}', subscription_renewal_date = '${end_dt}' WHERE stripe_id = '${customerID}'`, (err, response) => {
-             if (err) {
-               console.error(err);
-               return;
-             }
-             sendMailSubscription(customerEmail, monthly_plan, subscrption_amount, currency);
-             db.query(`INSERT INTO payment_logs (user_email, amount_paid, currency, plan) VALUES ('${customerEmail}', '${subscrption_amount}', '${currency}', 'renewal')`, async (err, response) => {
-               if (err) {
-                   console.error(err);
-                   return;
-              }
-            });
-        });
-
-      });
-          }
-      }
-
-      break;
-
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  // Return a 200 response to acknowledge receipt of the event
-  response.send();
-});
-
-// This is your Stripe CLI webhook secret for testing your endpoint locally.
-const endpointSecret = "whsec_693389176ceed70293cb0b3bb07bf5477903b7d1cbccc701d5780d6f31e866b3";
-
-app.post('/mywebhook', bodyParser.json({type: 'application/json'}), (request, response) => {
-
-  const event = request.body;
-
-  // Handle the event
-  switch (event.type) {
-
-    case 'customer.subscription.deleted':
-      const customerSubscriptionDeleted = event.data.object;
-      console.log('subscription deleted');
-      var credits = 0;
-      var customerEmail = '';
-
-      db.query(`SELECT * FROM user WHERE stripe_id = '${customerSubscriptionDeleted.customer}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        customerEmail = response[0].email;
-        db.query(`UPDATE user SET cancellation_status = 1 WHERE stripe_id = '${customerSubscriptionDeleted.customer}'`, (err, response) => {
-                if (err) {
-                     console.error(err);
-                     return;
-                }
-                sendMailSubscriptionCancel(customerEmail);
-        });
-      });
-
-      break;
-
-    case 'customer.subscription.updated':
-      const customerSubscriptionUpdated = event.data.object;
-      console.log("customer Subscription Updated");
-     
-      var customerEmail = '';
-
-      db.query(`SELECT * FROM user WHERE stripe_id = '${customerSubscriptionUpdated.customer}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        customerEmail = response[0].email;
-      });   
-
-      // If subscription cancellation requested by customer
-      if(customerSubscriptionUpdated.cancellation_details.reason == 'cancellation_requested'){
-           db.query(`UPDATE user SET cancellation_status = 1 WHERE stripe_id = '${customerSubscriptionUpdated.customer}'`, (err, response) => {
-                if (err) {
-                     console.error(err);
-                     return;
-                }
-               sendMailSubscriptionCancel(customerEmail);
-           });
-      }
-
-      break;
-
-    case 'invoice.payment_failed':
-      const invoicePaymentFailed = event.data.object;
-      var customerID = invoicePaymentFailed.customer;
-
-      db.query(`SELECT * FROM user WHERE stripe_id = '${customerID}'`, (err, response) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        var customerEmail = response[0].email;
-        sendMailMonthlyPaymentFailed(customerEmail);
-      }); 
-      break;
-
-    case 'payment_intent.succeeded':
-      const paymentIntentSucceeded = event.data.object;
-      // Then define and call a function to handle the event invoice.payment_succeeded
-      console.log('payment success');
-      
-      if(paymentIntentSucceeded.customer){
-          var customerID = paymentIntentSucceeded.customer;
-          if(paymentIntentSucceeded.description != 'Subscription creation'){
-        db.query(`SELECT * FROM user WHERE stripe_id = '${customerID}'`, (err, response) => {
-        if (err) {
-             console.error(err);
-             return;
-        }
-        var customerEmail = response[0].email;
-        var monthly_plan = response[0].monthly_plan;
-        var subscrption_amount = response[0].subscrption_amount;
-        var currency = response[0].currency;
-        var start_dt = new Date();  
-        var start_edt = start_dt.toJSON().slice(0, 10);
-        var end_dt = new Date(new Date().setDate(start_dt.getDate() + 30)).toJSON().slice(0, 10); 
-
 
         db.query(`UPDATE user SET credits_availbe = '${monthly_plan}', subscription_start_date = '${start_edt}', subscription_renewal_date = '${end_dt}' WHERE stripe_id = '${customerID}'`, (err, response) => {
              if (err) {
@@ -2873,27 +2528,6 @@ try{
   console.log(error)
 }
 } 
-
-// Sending Mail for enquire
-// async function sendMailEnquire(first_name, last_name, email, subject, message) {
-
-// try{
-//     // Send the email
-//   let info = await transporter.sendMail({
-//     from: '"OneClickHuman" <info@oneclickhuman.com>',
-//     to: "pabitravirtualnode123@gmail.com", // Test email address 
-//     subject: "New Enquire - OneClickHuman",
-//     text: "Here's a text version of the email.",
-//     html: "Hello,<br><br>This is a new enquire. <br><br><b>Name:</b> " + first_name + " " + last_name + "<br><b>Email:</b> " + email + "<br><b>Subject:</b> " + subject + "<br><b>Message: </b>" + message + "<br><br>Regards,<br>OneClickHuman",
-//   });
-  
-//   console.log("Message sent: %s", info.messageId); // Output message ID
-//   console.log("View email: %s", nodemailer.getTestMessageUrl(info)); // URL to preview email
-
-// }catch(error){
-//   console.log(error)
-// }
-// } 
 
 async function sendMailEnquire(first_name, last_name, email, subject, message, originalMessageId) {
   try {
