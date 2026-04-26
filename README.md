@@ -20,13 +20,13 @@ public/images/          # Static assets
 utils/prompt.js         # Utility functions
 ```
 
-## License
-MIT
-
 ## Getting Started
 1. Clone the repository
 2. Run `npm install` to install dependencies
 3. Configure your database in `config/connection.js`
 4. Start the server: `node index.js`
 5. Access API endpoints at `http://localhost:3000/`
+
+## License
+MIT
 
